@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>thtisan — Tanbir Hasan Tisan</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --green:#00ff41;
+  --green-dim:#00cc33;
+  --green-dark:#003300;
+  --green-glow:rgba(0,255,65,0.4);
+  --bg:#020c02;
+  --bg2:#030f03;
+  --text:#c8ffc8;
+  --dim:#4a8f4a;
+  --red:#ff3333;
+  --cyan:#00ffff;
+  --yellow:#ffff00;
+}
+
+html,body{height:100%;overflow-x:hidden}
+body{
+  background:var(--bg);
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+  cursor:none;
+  min-height:100vh;
+}
+
+/* CUSTOM CURSOR */
+#cursor{
+  position:fixed;width:20px;height:20px;
+  border:2px solid var(--green);
+  border-radius:50%;pointer-events:none;
+  z-index:9999;transition:transform 0.1s;
+  mix-blend-mode:difference;
+}
+#cursor-dot{
+  position:fixed;width:4px;height:4px;
+  background:var(--green);border-radius:50%;
+  pointer-events:none;z-index:9999;
+}
+#cursor.clicking{transform:scale(0.6)}
+
+/* MATRIX CANVAS */
+#matrix-canvas{
+  position:fixed;top:0;left:0;
+  width:100%;height:100%;
+  opacity:0.07;z-index:0;
+  pointer-events:none;
+}
+
+/* SCANLINES */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+  pointer-events:none;z-index:1;
+}
+
+/* NOISE OVERLAY */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:1;opacity:0.4;
+}
+
+/* MAIN WRAPPER */
+.wrapper{
+  position:relative;z-index:2;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:3rem 1.5rem 4rem;
+}
+
+/* TERMINAL HEADER */
+.terminal-bar{
+  width:100%;max-width:620px;
+  background:#0a1a0a;
+  border:1px solid var(--green-dim);
+  border-bottom:none;
+  border-radius:10px 10px 0 0;
+  padding:0.6rem 1rem;
+  display:flex;align-items:center;gap:0.6rem;
+  box-shadow:0 0 40px rgba(0,255,65,0.08);
+}
+.t-dot{width:12px;height:12px;border-radius:50%}
+.t-dot.red{background:#ff5f56}
+.t-dot.yellow{background:#ffbd2e}
+.t-dot.green{background:#27c93f}
+.t-title{
+  flex:1;text-align:center;
+  font-size:0.75rem;color:var(--dim);
+  letter-spacing:2px;
+}
+
+/* TERMINAL BODY */
+.terminal{
+  width:100%;max-width:620px;
+  background:rgba(2,12,2,0.97);
+  border:1px solid var(--green-dim);
+  border-top:none;
+  border-radius:0 0 10px 10px;
+  padding:2rem;
+  box-shadow:0 0 60px rgba(0,255,65,0.1),inset 0 0 80px rgba(0,0,0,0.5);
+  position:relative;overflow:hidden;
+}
+.terminal::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,255,65,0.04) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+/* BOOT SEQUENCE */
+#boot-screen{
+  font-size:0.75rem;color:var(--dim);
+  line-height:1.8;margin-bottom:1.5rem;
+  min-height:80px;
+}
+.boot-line{opacity:0;animation:bootline 0.1s forwards}
+@keyframes bootline{to{opacity:1}}
+
+/* PROFILE SECTION */
+#profile-section{opacity:0;transition:opacity 0.8s}
+#profile-section.visible{opacity:1}
+
+.profile-pic-wrap{
+  display:flex;justify-content:center;margin-bottom:1.5rem;
+  position:relative;
+}
+.profile-pic-ring{
+  position:relative;
+  width:110px;height:110px;
+}
+.profile-pic-ring::before{
+  content:'';position:absolute;inset:-4px;
+  border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--green);
+  border-right-color:var(--green);
+  animation:spin 3s linear infinite;
+}
+.profile-pic-ring::after{
+  content:'';position:absolute;inset:-8px;
+  border-radius:50%;
+  border:1px solid transparent;
+  border-bottom-color:var(--green-dim);
+  border-left-color:var(--green-dim);
+  animation:spin 5s linear infinite reverse;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.profile-img{
+  width:110px;height:110px;
+  border-radius:50%;
+  object-fit:cover;
+  border:3px solid var(--green-dark);
+  display:block;
+  background:var(--green-dark);
+  position:relative;z-index:1;
+}
+.profile-placeholder{
+  width:110px;height:110px;
+  border-radius:50%;
+  background:var(--green-dark);
+  border:3px solid var(--green-dim);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.5rem;color:var(--green-dim);
+  position:relative;z-index:1;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.profile-placeholder:hover{
+  background:#004d00;
+  border-color:var(--green);
+  box-shadow:0 0 20px var(--green-glow);
+}
+
+.name-section{text-align:center;margin-bottom:0.5rem}
+.name-main{
+  font-family:'Orbitron',monospace;
+  font-size:1.6rem;font-weight:900;
+  color:var(--green);
+  text-shadow:0 0 20px var(--green-glow),0 0 40px rgba(0,255,65,0.2);
+  letter-spacing:3px;
+  animation:glitch 8s infinite;
+}
+@keyframes glitch{
+  0%,90%,100%{text-shadow:0 0 20px var(--green-glow),0 0 40px rgba(0,255,65,0.2)}
+  92%{text-shadow:-2px 0 var(--red),2px 0 var(--cyan),0 0 20px var(--green-glow)}
+  94%{text-shadow:2px 0 var(--red),-2px 0 var(--cyan),0 0 20px var(--green-glow)}
+  96%{text-shadow:-2px 0 var(--red),2px 0 var(--cyan),0 0 20px var(--green-glow)}
+  98%{text-shadow:0 0 20px var(--green-glow)}
+}
+
+.name-full{
+  font-size:0.75rem;color:var(--dim);
+  letter-spacing:2px;margin-top:0.3rem;
+  text-transform:uppercase;
+}
+.tagline{
+  text-align:center;
+  font-size:0.9rem;color:var(--green-dim);
+  margin:0.75rem 0 2rem;
+  position:relative;
+}
+.tagline::before{content:'> ';color:var(--green)}
+.tagline .cursor-blink{
+  display:inline-block;width:8px;height:14px;
+  background:var(--green);margin-left:2px;
+  animation:blink 1s infinite;vertical-align:middle;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* STATUS BAR */
+.status-bar{
+  display:flex;gap:1rem;justify-content:center;
+  flex-wrap:wrap;margin-bottom:2rem;
+  font-size:0.7rem;color:var(--dim);
+}
+.status-item{display:flex;align-items:center;gap:0.4rem}
+.status-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);
+  animation:pulse-dot 2s infinite;
+}
+@keyframes pulse-dot{
+  0%,100%{box-shadow:0 0 0 0 rgba(0,255,65,0.6)}
+  50%{box-shadow:0 0 0 5px rgba(0,255,65,0)}
+}
+
+/* DIVIDER */
+.divider{
+  border:none;
+  border-top:1px solid var(--green-dark);
+  margin:1.5rem 0;
+  position:relative;
+}
+.divider::before{
+  content:'──── LINKS ────';
+  position:absolute;top:-0.6rem;left:50%;transform:translateX(-50%);
+  background:var(--bg);padding:0 0.75rem;
+  font-size:0.65rem;color:var(--dim);letter-spacing:3px;
+  white-space:nowrap;
+}
+
+/* LINKS */
+.links-container{display:flex;flex-direction:column;gap:0.75rem}
+
+.link-item{
+  display:flex;align-items:center;gap:1rem;
+  padding:0.85rem 1.1rem;
+  border:1px solid var(--green-dark);
+  border-radius:6px;
+  background:rgba(0,50,0,0.2);
+  text-decoration:none;
+  color:var(--text);
+  font-size:0.88rem;
+  position:relative;overflow:hidden;
+  transition:all 0.25s;
+  cursor:none;
+  group:link;
+}
+.link-item::before{
+  content:'';position:absolute;left:-100%;top:0;
+  width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(0,255,65,0.08),transparent);
+  transition:left 0.4s;
+}
+.link-item:hover::before{left:100%}
+.link-item:hover{
+  border-color:var(--green);
+  background:rgba(0,80,0,0.3);
+  transform:translateX(4px);
+  box-shadow:0 0 20px rgba(0,255,65,0.1),inset 0 0 20px rgba(0,255,65,0.03);
+  color:var(--green);
+}
+.link-item:hover .link-arrow{opacity:1;transform:translateX(0)}
+.link-item:hover .link-icon{text-shadow:0 0 10px currentColor}
+
+.link-prefix{color:var(--dim);font-size:0.75rem;flex-shrink:0}
+.link-icon{font-size:1.1rem;flex-shrink:0;transition:all 0.2s}
+.link-content{flex:1}
+.link-name{font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;letter-spacing:1px;margin-bottom:0.15rem}
+.link-handle{font-size:0.72rem;color:var(--dim)}
+.link-arrow{
+  font-size:0.8rem;color:var(--green);
+  opacity:0;transform:translateX(-8px);
+  transition:all 0.2s;flex-shrink:0;
+}
+
+/* LINK COLORS */
+.link-email .link-icon{color:#ff6b6b}
+.link-github .link-icon{color:#f0f6fc}
+.link-facebook .link-icon{color:#4267B2}
+.link-instagram .link-icon{color:#E1306C}
+.link-twitter .link-icon{color:#1DA1F2}
+.link-reddit .link-icon{color:#FF4500}
+
+/* FOOTER */
+.footer{
+  margin-top:2rem;text-align:center;
+  font-size:0.65rem;color:var(--dim);
+  line-height:1.8;
+}
+.footer .ver{color:var(--green-dim)}
+
+/* PHOTO UPLOAD MODAL */
+#upload-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.9);
+  z-index:1000;display:none;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+#upload-modal.active{display:flex}
+.upload-box{
+  background:#030f03;
+  border:1px solid var(--green);
+  border-radius:10px;
+  padding:2rem;max-width:400px;width:90%;
+  box-shadow:0 0 60px rgba(0,255,65,0.2);
+}
+.upload-title{
+  font-family:'Orbitron',monospace;
+  font-size:1rem;color:var(--green);
+  margin-bottom:1.5rem;text-align:center;
+  letter-spacing:2px;
+}
+.upload-drop{
+  border:2px dashed var(--green-dim);
+  border-radius:8px;padding:2rem;
+  text-align:center;color:var(--dim);
+  font-size:0.8rem;cursor:pointer;
+  transition:all 0.3s;margin-bottom:1rem;
+}
+.upload-drop:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,65,0.04)}
+.upload-drop input{display:none}
+.upload-btn{
+  width:100%;padding:0.75rem;
+  background:var(--green-dark);
+  border:1px solid var(--green);
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+  font-size:0.85rem;letter-spacing:2px;
+  cursor:pointer;border-radius:6px;
+  transition:all 0.2s;
+}
+.upload-btn:hover{background:#004d00;box-shadow:0 0 15px var(--green-glow)}
+.upload-close{
+  background:none;border:none;color:var(--dim);
+  font-family:'Share Tech Mono',monospace;
+  font-size:0.75rem;cursor:pointer;
+  display:block;text-align:center;margin-top:0.75rem;
+  width:100%;
+}
+.upload-close:hover{color:var(--red)}
+
+/* ADMIN HINT */
+.admin-hint{
+  position:fixed;bottom:1.5rem;right:1.5rem;
+  font-size:0.65rem;color:var(--dim);
+  cursor:pointer;z-index:3;
+  transition:color 0.2s;
+  letter-spacing:1px;
+}
+.admin-hint:hover{color:var(--green)}
+
+/* GLITCH LINES */
+.glitch-line{
+  position:fixed;height:1px;background:var(--green);
+  opacity:0;pointer-events:none;z-index:2;
+  animation:glitch-scan 12s infinite;
+}
+@keyframes glitch-scan{
+  0%{opacity:0;top:-5%;width:100%}
+  5%{opacity:0.4}
+  10%{opacity:0;top:110%}
+  100%{opacity:0;top:110%}
+}
+.glitch-line:nth-child(2){animation-delay:4s;animation-duration:9s}
+.glitch-line:nth-child(3){animation-delay:7s;animation-duration:14s}
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+<div class="glitch-line"></div>
+<div class="glitch-line"></div>
+<div class="glitch-line"></div>
+
+<div class="wrapper">
+
+  <div class="terminal-bar">
+    <div class="t-dot red"></div>
+    <div class="t-dot yellow"></div>
+    <div class="t-dot green"></div>
+    <div class="t-title">thtisan@terminal ~ /profile</div>
+  </div>
+
+  <div class="terminal">
+
+    <!-- BOOT SEQUENCE -->
+    <div id="boot-screen"></div>
+
+    <!-- PROFILE -->
+    <div id="profile-section">
+
+      <div class="profile-pic-wrap">
+        <div class="profile-pic-ring">
+          <img id="profile-img" class="profile-img" src="" alt="Tisan"
+            style="display:none"
+            onerror="this.style.display='none';document.getElementById('profile-ph').style.display='flex'">
+          <div id="profile-ph" class="profile-placeholder" onclick="openUpload()" title="Click to upload photo">
+            👤
+          </div>
+        </div>
+      </div>
+
+      <div class="name-section">
+        <div class="name-main">THTISAN</div>
+        <div class="name-full">Tanbir Hasan Tisan</div>
+      </div>
+
+      <div class="tagline">
+        <span id="tagline-text"></span><span class="cursor-blink"></span>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-item"><div class="status-dot"></div><span>ONLINE</span></div>
+        <div class="status-item"><span>📍 Bangladesh</span></div>
+        <div class="status-item"><span>🎓 Student</span></div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="links-container">
+
+        <a href="mailto:thtisan005@gmail.com" class="link-item link-email">
+          <span class="link-prefix">[01]</span>
+          <span class="link-icon">✉</span>
+          <div class="link-content">
+            <div class="link-name">EMAIL</div>
+            <div class="link-handle">thtisan005@gmail.com</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://github.com/thtisan" target="_blank" rel="noopener" class="link-item link-github">
+          <span class="link-prefix">[02]</span>
+          <span class="link-icon">⌥</span>
+          <div class="link-content">
+            <div class="link-name">GITHUB</div>
+            <div class="link-handle">github/thtisan</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://facebook.com/tanbir.hasan.tisan" target="_blank" rel="noopener" class="link-item link-facebook">
+          <span class="link-prefix">[03]</span>
+          <span class="link-icon">ƒ</span>
+          <div class="link-content">
+            <div class="link-name">FACEBOOK</div>
+            <div class="link-handle">Tanbir Hasan Tisan</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://instagram.com/thetisan.io" target="_blank" rel="noopener" class="link-item link-instagram">
+          <span class="link-prefix">[04]</span>
+          <span class="link-icon">◈</span>
+          <div class="link-content">
+            <div class="link-name">INSTAGRAM</div>
+            <div class="link-handle">@thetisan.io</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://x.com/th_tisan" target="_blank" rel="noopener" class="link-item link-twitter">
+          <span class="link-prefix">[05]</span>
+          <span class="link-icon">𝕏</span>
+          <div class="link-content">
+            <div class="link-name">X / TWITTER</div>
+            <div class="link-handle">@th_tisan</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://reddit.com/user/thtisan" target="_blank" rel="noopener" class="link-item link-reddit">
+          <span class="link-prefix">[06]</span>
+          <span class="link-icon">◉</span>
+          <div class="link-content">
+            <div class="link-name">REDDIT</div>
+            <div class="link-handle">u/thtisan</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </a>
+
+      </div>
+
+      <div class="footer">
+        <span class="ver">v2.4.1</span> · © 2025 THTISAN · All systems nominal<br>
+        <span style="color:#1a4a1a">Built with passion & caffeine</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO UPLOAD MODAL -->
+<div id="upload-modal">
+  <div class="upload-box">
+    <div class="upload-title">// UPLOAD PHOTO</div>
+    <div class="upload-drop" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept="image/*" onchange="handleFile(this.files[0])">
+      <div style="font-size:2rem;margin-bottom:0.5rem">📁</div>
+      <div>Click or drag & drop your photo</div>
+      <div style="font-size:0.7rem;margin-top:0.4rem;color:#2a5a2a">JPG, PNG, WEBP supported</div>
+    </div>
+    <button class="upload-btn" onclick="document.getElementById('file-input').click()">[ SELECT FILE ]</button>
+    <button class="upload-close" onclick="closeUpload()">// cancel</button>
+  </div>
+</div>
+
+<div class="admin-hint" onclick="openUpload()">[ upload photo ]</div>
+
+<script>
+// ── MATRIX RAIN ──────────────────────────────────────────────────
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()_+-=[]{}|;:,.<>?/\\~`ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ';
+let drops = [];
+function resizeMatrix() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const cols = Math.floor(canvas.width / 16);
+  drops = Array(cols).fill(1);
+}
+resizeMatrix();
+window.addEventListener('resize', resizeMatrix);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(2, 12, 2, 0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '14px Share Tech Mono';
+  for (let i = 0; i < drops.length; i++) {
+    const c = chars[Math.floor(Math.random() * chars.length)];
+    const bright = Math.random() > 0.95;
+    ctx.fillStyle = bright ? '#ffffff' : '#00ff41';
+    ctx.globalAlpha = bright ? 0.9 : 0.6;
+    ctx.fillText(c, i * 16, drops[i] * 16);
+    ctx.globalAlpha = 1;
+    if (drops[i] * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+setInterval(drawMatrix, 50);
+
+// ── CUSTOM CURSOR ─────────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+let mx = 0, my = 0, cx = 0, cy = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+function animCursor() {
+  cx += (mx - cx) * 0.15; cy += (my - cy) * 0.15;
+  cursor.style.left = cx - 10 + 'px'; cursor.style.top = cy - 10 + 'px';
+  cursorDot.style.left = mx - 2 + 'px'; cursorDot.style.top = my - 2 + 'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+
+// ── BOOT SEQUENCE ─────────────────────────────────────────────────
+const bootLines = [
+  { text: 'BIOS v4.2.1 © TISAN SYSTEMS', delay: 0, color: '#4a8f4a' },
+  { text: 'Initializing memory... OK', delay: 300 },
+  { text: 'Loading kernel modules... OK', delay: 500 },
+  { text: 'Mounting filesystem... OK', delay: 700 },
+  { text: 'Establishing network... OK', delay: 900 },
+  { text: 'Decrypting identity.dat... ▓▓▓▓▓▓▓▓▓▓ 100%', delay: 1100 },
+  { text: '> User authenticated: THTISAN', delay: 1600, color: '#00ff41', bold: true },
+  { text: '> Loading profile...', delay: 1900 },
+];
+
+const bootEl = document.getElementById('boot-screen');
+let bootDone = false;
+
+bootLines.forEach(({ text, delay, color, bold }) => {
+  setTimeout(() => {
+    const line = document.createElement('div');
+    line.className = 'boot-line';
+    line.style.animationDelay = '0s';
+    line.style.color = color || '#4a8f4a';
+    if (bold) line.style.fontWeight = 'bold';
+    line.textContent = text;
+    bootEl.appendChild(line);
+  }, delay);
+});
+
+setTimeout(() => {
+  bootEl.style.display = 'none';
+  const profile = document.getElementById('profile-section');
+  profile.classList.add('visible');
+  typeTagline();
+  loadSavedPhoto();
+}, 2400);
+
+// ── TAGLINE TYPING ────────────────────────────────────────────────
+function typeTagline() {
+  const taglines = ['thtisan', 'Student. Builder. Explorer.', 'echo $PASSION | grep -i code', 'while(alive) { learn(); }'];
+  let ti = 0, ci = 0, deleting = false, wait = 0;
+  const el = document.getElementById('tagline-text');
+  function tick() {
+    if (wait > 0) { wait--; setTimeout(tick, 50); return; }
+    const cur = taglines[ti];
+    if (!deleting) {
+      el.textContent = cur.slice(0, ++ci);
+      if (ci === cur.length) { deleting = true; wait = 40; }
+    } else {
+      el.textContent = cur.slice(0, --ci);
+      if (ci === 0) { deleting = false; ti = (ti + 1) % taglines.length; wait = 8; }
+    }
+    setTimeout(tick, deleting ? 40 : 80);
+  }
+  tick();
+}
+
+// ── PHOTO UPLOAD ──────────────────────────────────────────────────
+function openUpload() {
+  document.getElementById('upload-modal').classList.add('active');
+}
+function closeUpload() {
+  document.getElementById('upload-modal').classList.remove('active');
+}
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = e.target.result;
+    localStorage.setItem('tisan_photo', data);
+    applyPhoto(data);
+    closeUpload();
+  };
+  reader.readAsDataURL(file);
+}
+function applyPhoto(src) {
+  const img = document.getElementById('profile-img');
+  const ph = document.getElementById('profile-ph');
+  img.src = src;
+  img.style.display = 'block';
+  ph.style.display = 'none';
+}
+function loadSavedPhoto() {
+  const saved = localStorage.getItem('tisan_photo');
+  if (saved) applyPhoto(saved);
+}
+
+// Drag & drop
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = '#00ff41'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '#00cc33'; });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.style.borderColor = '#00cc33';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleFile(file);
+});
+
+// Close modal on background click
+document.getElementById('upload-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('upload-modal')) closeUpload();
+});
+
+// Easter egg: konami code
+let konami = [], konamiCode = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+document.addEventListener('keydown', e => {
+  konami.push(e.key);
+  if (konami.length > 10) konami.shift();
+  if (konami.join(',') === konamiCode.join(',')) {
+    document.querySelector('.name-main').style.animation = 'none';
+    document.querySelector('.name-main').style.color = '#ff3333';
+    document.querySelector('.name-main').textContent = 'H4CK3R';
+    setTimeout(() => {
+      document.querySelector('.name-main').style.color = '';
+      document.querySelector('.name-main').style.animation = '';
+      document.querySelector('.name-main').textContent = 'THTISAN';
+    }, 2000);
+  }
+});
+</script>
+</body>
+</html>
