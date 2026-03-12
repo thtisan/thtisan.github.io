@@ -148,6 +148,147 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   .change-photo-btn{cursor:pointer;}
 }
 
+/* HACKER FLOAT CHAT */
+
+.chat-float{
+position:fixed;
+bottom:20px;
+right:20px;
+
+background:#001500;
+border:1px solid #00ff41;
+
+color:#00ff41;
+
+padding:10px 14px;
+
+border-radius:6px;
+
+font-family:'Share Tech Mono',monospace;
+
+font-size:12px;
+
+cursor:pointer;
+
+z-index:9999;
+
+display:flex;
+align-items:center;
+gap:6px;
+
+box-shadow:0 0 15px rgba(0,255,65,0.3);
+
+animation:pulseChat 2s infinite;
+}
+
+@keyframes pulseChat{
+0%{box-shadow:0 0 10px rgba(0,255,65,0.2)}
+50%{box-shadow:0 0 25px rgba(0,255,65,0.7)}
+100%{box-shadow:0 0 10px rgba(0,255,65,0.2)}
+}
+
+.chat-float:hover{
+background:#003300;
+}
+
+/* POPUP WINDOW */
+
+#chatPopup{
+display:none;
+
+position:fixed;
+
+top:50%;
+left:50%;
+
+transform:translate(-50%,-50%);
+
+width:90vw;
+max-width:420px;
+height:80vh;
+
+background:#020c02;
+
+border:1px solid #00ff41;
+
+border-radius:8px;
+
+z-index:10000;
+
+box-shadow:0 0 40px rgba(0,255,65,0.4);
+
+overflow:hidden;
+}
+
+/* HEADER */
+
+.chat-head{
+background:#001500;
+
+border-bottom:1px solid #00ff41;
+
+padding:8px 10px;
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+cursor:move;
+font-size:12px;
+}
+
+.chat-head button{
+background:none;
+border:1px solid #00ff41;
+color:#00ff41;
+width:24px;
+height:24px;
+cursor:pointer;
+}
+
+.chat-head button:hover{
+background:#003300;
+}
+
+/* CHAT FRAME */
+
+#chatPopup iframe{
+width:100%;
+height:100%;
+border:none;
+background:black;
+}
+
+/* MOBILE */
+
+@media(max-width:480px){
+
+#chatPopup{
+width:95vw;
+height:85vh;
+}
+
+.chat-float{
+bottom:15px;
+right:15px;
+}
+
+}
+/* FULLSCREEN MODE */
+
+.chat-fullscreen{
+
+top:0 !important;
+left:0 !important;
+
+transform:none !important;
+
+width:100vw !important;
+height:100vh !important;
+
+border-radius:0 !important;
+
+}
 </style>
 </head>
 <body>
@@ -299,6 +440,89 @@ document.getElementById('upload-modal').addEventListener('click',e=>{if(e.target
 
 let konami=[],konamiCode=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 document.addEventListener('keydown',e=>{konami.push(e.key);if(konami.length>10)konami.shift();if(konami.join(',')===konamiCode.join(',')){document.querySelector('.name-main').style.animation='none';document.querySelector('.name-main').style.color='#ff3333';document.querySelector('.name-main').textContent='H4CK3R';setTimeout(()=>{document.querySelector('.name-main').style.color='';document.querySelector('.name-main').style.animation='';document.querySelector('.name-main').textContent='THTISAN';},2000);}});
+
+function openChatWindow(){
+document.getElementById("chatPopup").style.display="block";
+}
+
+function closeChatWindow(){
+document.getElementById("chatPopup").style.display="none";
+}
+
+function minChat(){
+document.getElementById("chatPopup").style.display="none";
+}
+
+/* DRAG WINDOW */
+
+const popup=document.getElementById("chatPopup");
+const header=document.getElementById("chatHeader");
+
+let isDragging=false;
+let offsetX,offsetY;
+
+header.addEventListener("mousedown",(e)=>{
+isDragging=true;
+offsetX=e.clientX-popup.offsetLeft;
+offsetY=e.clientY-popup.offsetTop;
+});
+
+document.addEventListener("mouseup",()=>{
+isDragging=false;
+});
+
+document.addEventListener("mousemove",(e)=>{
+if(!isDragging)return;
+
+popup.style.left=(e.clientX-offsetX)+"px";
+popup.style.top=(e.clientY-offsetY)+"px";
+popup.style.transform="none";
+});
+
+function minChat(){
+
+document.getElementById("chatPopup").style.display="none";
+
+}
+
+function fullChat(){
+
+const popup=document.getElementById("chatPopup");
+
+popup.classList.toggle("chat-fullscreen");
+
+}
+
 </script>
+
+<!-- FLOATING CHAT BUTTON -->
+
+<div class="chat-float" onclick="openChatWindow()">
+ 💭TCHAT
+</div>
+
+<!-- CHAT POPUP -->
+
+<div id="chatPopup">
+
+<div class="chat-head" id="chatHeader">
+
+<span>tchat-pq78.onrender.com</span>
+
+<div>
+
+<button onclick="minChat()">—</button>
+<button onclick="fullChat()">⛶</button>
+<button onclick="closeChatWindow()">✕</button>
+
+</div>
+
+</div>
+
+<iframe src="https://tchat-pq78.onrender.com"></iframe>
+
+</div>
+
+
 </body>
 </html>
