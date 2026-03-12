@@ -196,7 +196,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   left: 0 !important;
   transform: none !important;
   width: 100vw !important;
-  height: 100vh !important;
+  height: 100dvh !important;
   max-width: none !important;
   max-height: none !important;
   border-radius: 0 !important;
@@ -204,7 +204,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 }
 
 /* MOBILE RESPONSIVE */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .wrapper{padding:2rem 1rem 3rem;}
   .name-main{font-size:1.4rem;}
   .link-item{padding:0.8rem 1rem;}
@@ -247,6 +247,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     height: 75vh;            /* Reduced from 90vh */
     max-height: 500px;       /* Added max-height */
     border-radius: 8px;      /* Slightly smaller radius */
+    will-change: transform;  /* Add for smoother animations */
   }
   
   .chat-head {
